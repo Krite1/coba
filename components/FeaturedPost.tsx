@@ -1,12 +1,16 @@
-
 import React from 'react';
 import { CheckCircleIcon, ArrowRightIcon } from './icons';
+import { Post } from '../types';
 
-const FeaturedPost: React.FC = () => {
+interface FeaturedPostProps {
+  post: Post;
+}
+
+const FeaturedPost: React.FC<FeaturedPostProps> = ({ post }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
       <div className="bg-teal-400 h-64 flex items-center justify-center p-8">
-        <img src="https://i.imgur.com/4g5g5aH.png" alt="Investment illustration" className="max-h-full object-contain" />
+        <img src={post.image_url} alt={post.title} className="max-h-full object-contain" />
       </div>
       <div className="p-6">
         <div className="flex items-center mb-4">
@@ -16,10 +20,10 @@ const FeaturedPost: React.FC = () => {
           </span>
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-3">
-          Memahami Peluang dan Resiko Investasi Reksadana bagi Kaum Millennial
+          {post.title}
         </h2>
         <p className="text-gray-600 mb-6 text-base">
-          Investasi bukan lagi hal tabu, peluang dan resiko investasi reksadana setidaknya telah sedikit didengar oleh usia produktif hingga dewasa. N...
+          {post.description}
         </p>
         <a href="#" className="inline-flex items-center font-semibold text-gray-700 hover:text-orange-600 transition-colors">
           Read more
