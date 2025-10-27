@@ -4,13 +4,15 @@ import FeaturedPost from './components/FeaturedPost';
 import PostCard from './components/PostCard';
 import AdWidget from './components/AdWidget';
 import TrendingWidget from './components/TrendingWidget';
+import PostPage from './components/PostPage';
 import { Post } from './types';
 
-// CSV data embedded as a string
-const csvData = `id,type,category,title,description,image_url,image_bg_class,custom_image_type
-1,featured,Featured,"Memahami Peluang dan Resiko Investasi Reksadana bagi Kaum Millennial","Investasi bukan lagi hal tabu, peluang dan resiko investasi reksadana setidaknya telah sedikit didengar oleh usia produktif hingga dewasa. N...","https://i.imgur.com/4g5g5aH.png",,
-2,card,SEO,"Kartu Virtual untuk Pembayaran Iklan: Iklan Facebook, Iklan Google, dan Iklan TikTok","Ulasan lengkap mengenai penggunaan kartu virtual untuk pembayaran iklan digital.","","bg-indigo-400",seo_illustration
-3,card,"Info Menarik","Aquila Project, PPC Alternatif Google AdSense","Jika mendengar Advertising Network, pasti yang terlintas di pikiran adalah Google AdSense.","","bg-blue-500",network_icon`;
+// CSV data embedded as a string, now with author, date, and content
+const csvData = `id,type,category,title,description,image_url,image_bg_class,custom_image_type,author_name,author_avatar_url,date,content
+1,featured,Featured,"Memahami Peluang dan Resiko Investasi Reksadana bagi Kaum Millennial","Investasi bukan lagi hal tabu, peluang dan resiko investasi reksadana setidaknya telah sedikit didengar oleh usia produktif hingga dewasa. N...","https://i.imgur.com/4g5g5aH.png",,,Arlina,"https://i.imgur.com/p3w0GgE.png",9/20/2023,"Konten lengkap untuk postingan Reksadana. Investasi reksadana adalah wadah untuk menghimpun dana dari masyarakat pemodal untuk selanjutnya diinvestasikan dalam portofolio efek oleh manajer investasi."
+2,card,SEO,"Kartu Virtual untuk Pembayaran Iklan: Iklan Facebook, Iklan Google, dan Iklan TikTok","Ulasan lengkap mengenai penggunaan kartu virtual untuk pembayaran iklan digital.","","bg-indigo-400",seo_illustration,Budi,"https://i.imgur.com/p3w0GgE.png",9/21/2023,"Ini adalah konten lengkap tentang kartu virtual. Pembahasan mendalam tentang bagaimana VCC dapat mempermudah transaksi online Anda dengan aman."
+3,card,"Info Menarik","Aquila Project, PPC Alternatif Google AdSense","Jika mendengar Advertising Network, Anda pasti sudah tidak asing mendengar kata ini. Sebagai seorang blogger pasti sudah sangat akrab dengan advertising network seperti Google Adsense, Mgid, Propeller Ads, Media.net, dan masih banyak lagi.","","bg-blue-500",network_icon,Arlina,"https://i.imgur.com/p3w0GgE.png",9/20/2023,"Jika mendengar Advertising Network, Anda pasti sudah tidak asing mendengar kata ini. Sebagai seorang blogger pasti sudah sangat akrab dengan advertising network seperti Google Adsense, Mgid, Propeller Ads, Media.net, dan masih banyak lagi. Advertising network atau yang biasa disebut PPC (pay per click) ini memang sudah menjadi sumber pendapatan tambahan bahkan pendapatan utama seorang blogger.\n\nSalah satu advertising network yang bisa Anda coba adalah Aquila Project. Aquila Project adalah prototipe advertising network yang berfokus pada privasi. Aquila Project menggunakan metode profiling dan targeting sederhana sehingga tidak membuat blog Anda menjadi berat/lelet dan tentunya sangat ramah privasi untuk pengunjung."`;
+
 
 // Simple CSV parser function
 function parseCSV(csvText: string): Post[] {
@@ -59,19 +61,64 @@ const customImageComponents: { [key: string]: React.ReactNode } = {
   ),
 };
 
-
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
     const parsedData = parseCSV(csvData);
     setPosts(parsedData);
     setLoading(false);
+
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      const match = hash.match(/^#\/post\/(\d+)$/);
+      if (match) {
+        setSelectedPostId(match[1]);
+      } else {
+        setSelectedPostId(null);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Check hash on initial load
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const featuredPost = posts.find(p => p.type === 'featured');
   const cardPosts = posts.filter(p => p.type === 'card');
+  const selectedPost = posts.find(p => p.id === selectedPostId);
+
+  const renderHomePage = () => (
+    <div className="lg:col-span-2 space-y-8">
+      {loading ? (
+        <p>Loading posts...</p>
+      ) : (
+        <>
+          {featuredPost && <FeaturedPost post={featuredPost} />}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {cardPosts.map(post => (
+              <PostCard 
+                key={post.id} 
+                post={post}
+                customImageContent={post.custom_image_type ? customImageComponents[post.custom_image_type] : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+  
+  const renderPostPage = () => (
+    <div className="lg:col-span-2 space-y-8">
+      {selectedPost ? <PostPage post={selectedPost} customImageContent={selectedPost.custom_image_type ? customImageComponents[selectedPost.custom_image_type] : undefined}/> : <p>Post not found.</p>}
+    </div>
+  );
 
   return (
     <div className="bg-[#fdfaf3] min-h-screen font-sans">
@@ -79,24 +126,7 @@ const App: React.FC = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {loading ? (
-              <p>Loading posts...</p>
-            ) : (
-              <>
-                {featuredPost && <FeaturedPost post={featuredPost} />}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {cardPosts.map(post => (
-                    <PostCard 
-                      key={post.id} 
-                      post={post}
-                      customImageContent={post.custom_image_type ? customImageComponents[post.custom_image_type] : undefined}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          {selectedPostId ? renderPostPage() : renderHomePage()}
 
           {/* Sidebar */}
           <aside className="space-y-8">

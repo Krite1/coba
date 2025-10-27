@@ -25,7 +25,7 @@ const FeaturedPost: React.FC<FeaturedPostProps> = ({ post }) => {
         <p className="text-gray-600 mb-6 text-base">
           {post.description}
         </p>
-        <a href="#" className="inline-flex items-center font-semibold text-gray-700 hover:text-orange-600 transition-colors">
+        <a href={`/#/post/${post.id}`} className="inline-flex items-center font-semibold text-gray-700 hover:text-orange-600 transition-colors">
           Read more
           <ArrowRightIcon className="w-4 h-4 ml-2" />
         </a>
