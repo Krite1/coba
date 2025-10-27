@@ -7,13 +7,6 @@ import TrendingWidget from './components/TrendingWidget';
 import PostPage from './components/PostPage';
 import { Post } from './types';
 
-// CSV data embedded as a string, now with author, date, and content
-const csvData = `id,type,category,title,description,image_url,image_bg_class,custom_image_type,author_name,author_avatar_url,date,content
-1,featured,Featured,"Memahami Peluang dan Resiko Investasi Reksadana bagi Kaum Millennial","Investasi bukan lagi hal tabu, peluang dan resiko investasi reksadana setidaknya telah sedikit didengar oleh usia produktif hingga dewasa. N...","https://i.imgur.com/4g5g5aH.png",,,Arlina,"https://i.imgur.com/p3w0GgE.png",9/20/2023,"Konten lengkap untuk postingan Reksadana. Investasi reksadana adalah wadah untuk menghimpun dana dari masyarakat pemodal untuk selanjutnya diinvestasikan dalam portofolio efek oleh manajer investasi."
-2,card,SEO,"Kartu Virtual untuk Pembayaran Iklan: Iklan Facebook, Iklan Google, dan Iklan TikTok","Ulasan lengkap mengenai penggunaan kartu virtual untuk pembayaran iklan digital.","","bg-indigo-400",seo_illustration,Budi,"https://i.imgur.com/p3w0GgE.png",9/21/2023,"Ini adalah konten lengkap tentang kartu virtual. Pembahasan mendalam tentang bagaimana VCC dapat mempermudah transaksi online Anda dengan aman."
-3,card,"Info Menarik","Aquila Project, PPC Alternatif Google AdSense","Jika mendengar Advertising Network, Anda pasti sudah tidak asing mendengar kata ini. Sebagai seorang blogger pasti sudah sangat akrab dengan advertising network seperti Google Adsense, Mgid, Propeller Ads, Media.net, dan masih banyak lagi.","","bg-blue-500",network_icon,Arlina,"https://i.imgur.com/p3w0GgE.png",9/20/2023,"Jika mendengar Advertising Network, Anda pasti sudah tidak asing mendengar kata ini. Sebagai seorang blogger pasti sudah sangat akrab dengan advertising network seperti Google Adsense, Mgid, Propeller Ads, Media.net, dan masih banyak lagi. Advertising network atau yang biasa disebut PPC (pay per click) ini memang sudah menjadi sumber pendapatan tambahan bahkan pendapatan utama seorang blogger.\n\nSalah satu advertising network yang bisa Anda coba adalah Aquila Project. Aquila Project adalah prototipe advertising network yang berfokus pada privasi. Aquila Project menggunakan metode profiling dan targeting sederhana sehingga tidak membuat blog Anda menjadi berat/lelet dan tentunya sangat ramah privasi untuk pengunjung."`;
-
-
 // Simple CSV parser function
 function parseCSV(csvText: string): Post[] {
   const lines = csvText.trim().split('\n');
@@ -64,12 +57,28 @@ const customImageComponents: { [key: string]: React.ReactNode } = {
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
-    const parsedData = parseCSV(csvData);
-    setPosts(parsedData);
-    setLoading(false);
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/post.csv');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch posts: ${response.statusText}`);
+        }
+        const csvText = await response.text();
+        const parsedData = parseCSV(csvText);
+        setPosts(parsedData);
+      } catch (err) {
+        console.error(err);
+        setError('Could not load post data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
 
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -97,6 +106,8 @@ const App: React.FC = () => {
     <div className="lg:col-span-2 space-y-8">
       {loading ? (
         <p>Loading posts...</p>
+      ) : error ? (
+        <p className="text-red-500 font-semibold">{error}</p>
       ) : (
         <>
           {featuredPost && <FeaturedPost post={featuredPost} />}
